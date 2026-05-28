@@ -1,57 +1,108 @@
-# Reporte de Proyecto: API REST Comercial
+# proyecto_clientes — API REST con FastAPI
 
-## 🧑‍💻 Información del Aprendiz
-*   **Nombre:** Oscar Andrés Navarro Ochoa
-*   **Ficha:** 3407184
-*   **Trabajo:** Proyecto Clientes
-
----
-
-## 📌 Resumen del Trabajo
-Diseñamos y construimos una **API REST comercial** utilizando **FastAPI** y **Pydantic**. El sistema gestiona de forma interactiva tres entidades enlazadas mediante objetos complejos:
-
-*   **Clientes:** Permite registrar usuarios ocultando el campo `id` en el formulario para calcularlo de forma automatizada y secuencial en el servidor. Incluye operaciones completas de lectura, actualización (`PUT`) y eliminación (`DELETE`).
-*   **Facturas:** Entidad que registra ventas asociando la fecha/hora automática, un valor monetario y el objeto de un `Cliente` completo.
-*   **Transacciones:** Módulo financiero que registra descripciones contables vinculadas directamente a una `Factura` específica.
+**Estudiante:** Oscar Andrés Navarro Ochoa  
+**Ficha:** 3407184  
+**Programa:** Teleinformática y Bases de Datos — SENA
 
 ---
 
-## 🛠️ Configuración del Entorno de Desarrollo
+## Estructura de carpetas
 
-### 1. Creación del Entorno Virtual (`venv`)
-El entorno virtual crea una carpeta aislada que contendrá únicamente las librerías que este proyecto necesita.
+```
+proyecto_clientes/
+├── app/
+│   ├── __init__.py         # Archivo vacío para que Python reconozca el módulo
+│   ├── main.py             # Punto de entrada de la API
+│   ├── database.py         # Configuración de la conexión a la base de datos
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── clientes.py     # Modelos de Cliente (Pydantic)
+│   │   └── facturas.py     # Modelos de Factura y Transacción (Pydantic)
+│   └── routers/
+│       ├── __init__.py
+│       └── clientes.py     # Endpoints o rutas (APIRouter)
+├── .venv                   # Entorno virtual
+├── requirements.txt        # Dependencias del proyecto
+└── README.md
+```
 
-*   **Comando ejecutado:**
-    ```bash
-    python -m venv venv
-    ```
+---
 
-*   **Activación según el sistema operativo:**
-    *   **Windows (CMD / PowerShell):**
-        ```powershell
-        venv\Scripts\activate
-        ```
-    *   **Mac / Linux:**
-        ```bash
-        source venv/bin/activate
-        ```
-    *   *Nota: Sabemos que está activo porque aparece la palabra `(venv)` al inicio de la línea de comandos en la terminal.*
+## ¿Qué se desarrolló?
 
-### 2. Instalación de FastAPI y sus Dependencias
-Instalamos el paquete completo estándar para asegurar que todas las herramientas de desarrollo y servidores locales estén disponibles inmediatamente.
+Se construyó una API REST usando **FastAPI** y **Python** con los siguientes recursos y operaciones:
 
-*   **Comando ejecutado:**
-    ```bash
-    pip install "fastapi[standard]"
-    ```
-    *Nota: Este comando instala automáticamente FastAPI, Pydantic (para la validación de datos) y Uvicorn (el servidor web ASGI que procesa las peticiones).*
+### Clientes
+- `GET /clientes` — Lista todos los clientes
+- `GET /clientes/{id}` — Obtiene un cliente por su id
+- `POST /clientes` — Crea un nuevo cliente
+- `PUT /clientes/{id}` — Edita un cliente existente
+- `DELETE /clientes/{id}` — Elimina un cliente
 
-### 3. Ejecución del Servidor de Desarrollo
-Para arrancar el proyecto en tiempo real y habilitar el reinicio automático cada vez que guardas un archivo, utilizamos la interfaz de comandos moderna de FastAPI:
+### Facturas
+- `GET /facturas` — Lista todas las facturas
+- `GET /facturas/{id}` — Obtiene una factura por su id
+- `POST /facturas` — Crea una nueva factura
+- `PUT /facturas/{id}` — Edita una factura existente
+- `DELETE /facturas/{id}` — Elimina una factura
 
-*   **Comando ejecutado:**
-    ```bash
-    fastapi dev main.py
-    ```
+### Transacciones
+- `GET /transacciones` — Lista todas las transacciones
+- `GET /transacciones/{id}` — Obtiene una transacción por su id
+- `POST /transacciones` — Crea una nueva transacción
+- `PUT /transacciones/{id}` — Edita una transacción existente
+- `DELETE /transacciones/{id}` — Elimina una transacción
 
-El servidor levanta localmente y nos entrega el acceso a la documentación interactiva autogenerada (Swagger UI) a través de la dirección **`127.0.0`**, lugar donde validamos visualmente el comportamiento de cada endpoint.
+### Modelos creados (`clientes.py`)
+
+| Modelo | Atributos |
+|---|---|
+| `ClienteCrear` | nombre, edad, descripcion |
+| `Cliente` | id, nombre, edad, descripcion |
+| `FacturaCrear` | fecha, cliente, lista_transacciones + método valor_total() |
+| `Factura` | id, fecha, cliente, lista_transacciones |
+| `TransaccionCrear` | factura_id, valor_unitario, cantidad |
+| `Transaccion` | id, factura_id, valor_unitario, cantidad |
+
+---
+
+## Cómo descargar y activar el entorno virtual
+
+### 1. Clonar o descargar el proyecto
+
+Si tienes Git instalado:
+```bash
+git clone <url-del-repositorio>
+cd proyecto_clientes
+```
+
+O simplemente descarga el ZIP y descomprímelo.
+
+### 2. Crear el entorno virtual
+
+```bash
+python -m venv .venv
+```
+
+### 3. Activar el entorno virtual
+
+**En Windows:**
+```bash
+.venv\Scripts\activate
+```
+
+
+Sabrás que está activo porque verás `(.venv)` al inicio de tu terminal.
+
+### 4. Instalar las dependencias
+
+```bash
+pip install -r requirements.txt
+```
+
+### 5. Ejecutar la API
+
+```bash
+uvicorn app.main:app --reload
+```
+

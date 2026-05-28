@@ -1,37 +1,240 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException
+from clientes import (
+    Cliente,
+    ClienteCrear,
+    Factura,
+    FacturaCrear,
+    Transaccion,
+    TransaccionCrear
+)
+
 
 app = FastAPI()
 
+
+lista_clientes = []
+lista_facturas = []
+lista_transacciones = []
+
+
 @app.get("/")
 def root():
-    return {"mensaje": "Hola mundo"}
+    return {"mensaje": "API funcionando correctamente"}
 
-#APLICACIÓN DE CLIENTES
-lista_clientes = [] # datos de la base de datos
 
-#model - modelos
-class Cliente(BaseModel):
-        id : int
-        nombre : str
-        edad : int
-        descripcion : str | None=None
+# CLIENTES
 
+
+# VER CLIENTES
 @app.get("/clientes")
 def listar_clientes():
-        return {"Clientes": lista_clientes}
+    return lista_clientes
 
+
+# VER UN CLIENTE
+@app.get("/clientes/{id}")
+def obtener_cliente(id: int):
+
+    for cliente in lista_clientes:
+
+        if cliente.id == id:
+            return cliente
+            
+
+
+    raise HTTPException(
+        status_code=404,
+        detail="Cliente no encontrado"
+    )
+
+
+# CREAR CLIENTE
 @app.post("/clientes")
-def crear_clientes(datos_clientes: Cliente):
-        lista_clientes.append(datos_clientes)
-        return {"mensaje": "Cliente creado"}
+def crear_cliente(cliente: Cliente):
 
-#RETO: Crear un nuevo endpoint y que me retorne un solo cliente
+    lista_clientes.append(cliente)
 
-@app.get("/clientes, {id}")
-def obtener(id : int):
+    return {
+        "mensaje": "Cliente creado correctamente",
+        "cliente": cliente
+    }
 
-        for cliente in listar_clientes:
-               
-               if cliente.id == id:
-                     return {"cliente" : cliente}
+
+# EDITAR CLIENTE
+@app.put("/clientes/{id}")
+def editar_cliente(id: int, datos_actualizados: ClienteCrear):
+
+    for index, cliente in enumerate(lista_clientes):
+
+        if cliente.id == id:
+
+            cliente_actualizado = Cliente(
+                id=id,
+                nombre=datos_actualizados.nombre,
+                edad=datos_actualizados.edad,
+                descripcion=datos_actualizados.descripcion
+            )
+
+            lista_clientes[index] = cliente_actualizado
+
+            return {
+                "mensaje": "Cliente actualizado",
+                "cliente": cliente_actualizado
+            }
+
+    raise HTTPException(
+        status_code=404,
+        detail="Cliente no encontrado"
+    )
+
+
+# ELIMINAR CLIENTE
+@app.delete("/clientes/{id}")
+def eliminar_cliente(id: int):
+
+    for index, cliente in enumerate(lista_clientes):
+
+        if cliente.id == id:
+
+            lista_clientes.pop(index)
+
+            return {
+                "mensaje": "Cliente eliminado"
+            }
+
+    raise HTTPException(
+        status_code=404,
+        detail="Cliente no encontrado"
+    )
+
+# VER FACTURAS
+@app.get("/facturas")
+def listar_facturas():
+    return lista_facturas
+
+
+# CREAR FACTURA
+@app.post("/facturas")
+def crear_factura(factura: Factura):
+
+    lista_facturas.append(factura)
+
+    return {
+        "mensaje": "Factura creada",
+        "factura": factura
+    }
+
+#EDITAR FACTURA
+@app.put("/facturas/{id}")
+def editar_factura(id: int, datos_actualizados: FacturaCrear):
+
+    for index, factura in enumerate(lista_facturas):
+
+        if factura.id == id:
+
+            factura_actualizada = Factura(
+                id=id,
+                fecha=datos_actualizados.fecha,
+                cliente=datos_actualizados.cliente,
+                lista_transacciones=datos_actualizados.lista_transacciones
+            )
+
+            lista_facturas[index] = factura_actualizada
+
+            return {
+                "mensaje": "Factura actualizada",
+                "factura": factura_actualizada
+            }
+
+    raise HTTPException(
+        status_code=404,
+        detail="Factura no encontrada"
+    )
+
+# ELIMINAR FACTURA
+@app.delete("/facturas/{id}")
+def eliminar_factura(id: int):
+
+    for index, Factura in enumerate(lista_facturas):
+
+        if Factura.id == id:
+
+            lista_facturas.pop(index)
+
+            return {
+                "mensaje": "Factura eliminada"
+            }
+
+    raise HTTPException(
+        status_code=404,
+        detail="Factura no encontrada"
+    )
+
+
+# VER TRANSACCIONES
+@app.get("/transacciones")
+def listar_transacciones():
+    return lista_transacciones
+
+# CREAR TRANSACCION
+@app.post("/transacciones")
+def crear_transaccion(transaccion: Transaccion):
+
+
+    lista_transacciones.append(transaccion)
+
+
+    return {
+        "mensaje": "Transacción creada",
+        "transaccion": transaccion
+    }
+    
+    
+@app.get("/facturas/{id}")
+def obtener_factura(id: int):
+
+    for factura in lista_facturas:
+
+        if factura.id == id:
+            return factura
+
+    raise HTTPException(
+        status_code=404,
+        detail="Factura no encontrada"
+    )
+    
+# VER UNA TRANSACCION
+@app.get("/transacciones/{id}")
+def obtener_transaccion(id: int):
+    for transaccion in lista_transacciones:
+        if transaccion.id == id:
+            return transaccion
+    raise HTTPException(status_code=404, detail="Transaccion no encontrada")
+
+
+# EDITAR TRANSACCION
+@app.put("/transacciones/{id}")
+def editar_transaccion(id: int, datos_actualizados: TransaccionCrear):
+    for index, transaccion in enumerate(lista_transacciones):
+        if transaccion.id == id:
+            transaccion_actualizada = Transaccion(
+                id=id,
+                factura_id=datos_actualizados.factura_id,
+                valor_unitario=datos_actualizados.valor_unitario,
+                cantidad=datos_actualizados.cantidad
+            )
+            lista_transacciones[index] = transaccion_actualizada
+            return {"mensaje": "Transaccion actualizada", "transaccion": transaccion_actualizada}
+    raise HTTPException(status_code=404, detail="Transaccion no encontrada")
+
+
+# ELIMINAR TRANSACCION
+@app.delete("/transacciones/{id}")
+def eliminar_transaccion(id: int):
+    for index, transaccion in enumerate(lista_transacciones):
+        if transaccion.id == id:
+            lista_transacciones.pop(index)
+            return {"mensaje": "Transaccion eliminada"}
+    raise HTTPException(status_code=404, detail="Transaccion no encontrada")
+    
+    

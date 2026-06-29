@@ -163,3 +163,17 @@ def eliminar_transaccion(id: int):
             lista_transacciones.remove(transaccion)
             return {"mensaje": "transaccion eliminada"}
     raise HTTPException(status_code=404, detail="no encontrada")
+
+@app.get("/facturas/{factura_id}")
+def obtener_factura(factura_id: int):
+    for factura in lista_facturas:
+        if factura.id == factura_id:
+            return {"factura": factura}
+    raise HTTPException(status_code=404, detail="Factura no encontrada")
+
+@app.get("/transacciones/{transaccion_id}")
+def obtener_transaccion(transaccion_id: int):
+    for transaccion in lista_transacciones:
+        if transaccion.id == transaccion_id:
+            return {"transaccion": transaccion}
+    raise HTTPException(status_code=404, detail="Transacción no encontrada")

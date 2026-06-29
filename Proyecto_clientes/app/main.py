@@ -1,9 +1,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from Proyecto_clientes.app.modelos.clientes import Cliente
-from Proyecto_clientes.app.modelos.facturas import Factura
-
+from app.modelos.clientes import Cliente
+from app.modelos.facturas import Factura
 app = FastAPI()
 
 # MODELO TRANSACCIONES

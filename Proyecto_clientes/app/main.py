@@ -105,21 +105,14 @@ def eliminar_cliente(id: int, db: Session = Depends(get_db)):
 @app.get("/facturas", tags=["Facturas"])
 def listar_facturas(db: Session = Depends(get_db)):
     facturas = db.query(FacturaORM).all()
-    return {
-        "facturas": [
-            {**FacturaDB.from_orm_factura(f).model_dump(), "valor_total": FacturaDB.from_orm_factura(f).valor_total()}
-            for f in facturas
-        ]
-    }
+    return {"facturas": [FacturaDB.from_orm_factura(f).model_dump() for f in facturas]}
 
 
 @app.get("/facturas/{factura_id}", tags=["Facturas"])
 def obtener_factura(factura_id: int, db: Session = Depends(get_db)):
     factura = obtener_factura_orm(db, factura_id)
     factura_db = FacturaDB.from_orm_factura(factura)
-    data = factura_db.model_dump()
-    data["valor_total"] = factura_db.valor_total()
-    return {"factura": data}
+    return {"factura": factura_db.model_dump()}
 
 
 @app.post("/facturas", tags=["Facturas"])
@@ -136,47 +129,53 @@ def crear_factura(datos: FacturaCreate, db: Session = Depends(get_db)):
     db.refresh(nueva_factura)
 
     factura_db = FacturaDB.from_orm_factura(nueva_factura)
-    data = factura_db.model_dump()
-    data["valor_total"] = factura_db.valor_total()
-    return {"mensaje": "Factura creada", "factura": data}
+    return {"mensaje": "Factura creada", "factura": factura_db.model_dump()}
 
 
 @app.put("/facturas/{factura_id}", tags=["Facturas"])
 def editar_factura(factura_id: int, datos: FacturaUpdate, db: Session = Depends(get_db)):
-    obtener_cliente_orm(db, datos.cliente)
     factura = obtener_factura_orm(db, factura_id)
-    factura.cliente_id = datos.cliente
+    if datos.cliente:
+        obtener_cliente_orm(db, datos.cliente)
+        factura.cliente_id = datos.cliente
+    if datos.numero:
+        factura.numero = datos.numero
+    if datos.fecha:
+        factura.fecha = datos.fecha
     db.commit()
     db.refresh(factura)
 
     factura_db = FacturaDB.from_orm_factura(factura)
-    data = factura_db.model_dump()
-    data["valor_total"] = factura_db.valor_total()
-    return {"mensaje": "Factura actualizada", "factura": data}
+    return {"mensaje": "Factura actualizada", "factura": factura_db.model_dump()}
 
 
 @app.delete("/facturas/{factura_id}", tags=["Facturas"])
 def eliminar_factura(factura_id: int, db: Session = Depends(get_db)):
     factura = obtener_factura_orm(db, factura_id)
     factura_db = FacturaDB.from_orm_factura(factura)
-    data = factura_db.model_dump()
-    data["valor_total"] = factura_db.valor_total()
 
     db.delete(factura)
     db.commit()
-    return {"mensaje": "Factura eliminada", "factura": data}
+    return {"mensaje": "Factura eliminada", "factura": factura_db.model_dump()}
 
 
 @app.get("/transacciones", tags=["Transacciones"])
 def listar_transacciones(db: Session = Depends(get_db)):
     transacciones = db.query(TransaccionORM).all()
-    return {"transacciones": [TransaccionDB.model_validate(t) for t in transacciones]}
+    resultado = []
+    for t in transacciones:
+        transaccion_db = TransaccionDB.model_validate(t)
+        transaccion_db.subtotal = t.valor_unitario * t.cantidad
+        resultado.append(transaccion_db.model_dump())
+    return {"transacciones": resultado}
 
 
 @app.get("/transacciones/{transaccion_id}", tags=["Transacciones"])
 def obtener_transaccion(transaccion_id: int, db: Session = Depends(get_db)):
     transaccion = obtener_transaccion_orm(db, transaccion_id)
-    return {"transaccion": TransaccionDB.model_validate(transaccion)}
+    transaccion_db = TransaccionDB.model_validate(transaccion)
+    transaccion_db.subtotal = transaccion.valor_unitario * transaccion.cantidad
+    return {"transaccion": transaccion_db.model_dump()}
 
 
 @app.post("/facturas/{factura_id}/transacciones", tags=["Transacciones"])
@@ -187,22 +186,27 @@ def crear_transaccion(factura_id: int, datos: TransaccionCreate, db: Session = D
     db.add(nueva_transaccion)
     db.commit()
     db.refresh(nueva_transaccion)
-    return {"mensaje": "Transaccion creada", "transaccion": TransaccionDB.model_validate(nueva_transaccion)}
+    
+    transaccion_db = TransaccionDB.model_validate(nueva_transaccion)
+    transaccion_db.subtotal = nueva_transaccion.valor_unitario * nueva_transaccion.cantidad
+    return {"mensaje": "Transaccion creada", "transaccion": transaccion_db.model_dump()}
 
 
-@app.put("/facturas/{factura_id}/transacciones/{transaccion_id}", tags=["Transacciones"])
-def editar_transaccion(factura_id: int, transaccion_id: int, datos: TransaccionUpdate, db: Session = Depends(get_db)):
-    obtener_factura_orm(db, factura_id)
+@app.put("/transacciones/{transaccion_id}", tags=["Transacciones"])
+def editar_transaccion(transaccion_id: int, datos: TransaccionUpdate, db: Session = Depends(get_db)):
     transaccion = obtener_transaccion_orm(db, transaccion_id)
 
     for campo, valor in datos.model_dump().items():
-        setattr(transaccion, campo, valor)
-    transaccion.factura_id = factura_id
+        if valor is not None:
+            setattr(transaccion, campo, valor)
     db.commit()
     db.refresh(transaccion)
+    
+    transaccion_db = TransaccionDB.model_validate(transaccion)
+    transaccion_db.subtotal = transaccion.valor_unitario * transaccion.cantidad
     return {
         "mensaje": "Transaccion actualizada",
-        "transaccion": TransaccionDB.model_validate(transaccion),
+        "transaccion": transaccion_db.model_dump(),
     }
 
 
@@ -210,9 +214,27 @@ def editar_transaccion(factura_id: int, transaccion_id: int, datos: TransaccionU
 def eliminar_transaccion(transaccion_id: int, db: Session = Depends(get_db)):
     transaccion = obtener_transaccion_orm(db, transaccion_id)
     eliminada = TransaccionDB.model_validate(transaccion)
+    eliminada.subtotal = transaccion.valor_unitario * transaccion.cantidad
     db.delete(transaccion)
     db.commit()
     return {
         "mensaje": "Transaccion eliminada",
-        "transaccion": eliminada,
+        "transaccion": eliminada.model_dump(),
+    }
+
+
+@app.get("/clientes/{cliente_id}/valor_total", tags=["Clientes"])
+def obtener_valor_total_cliente(cliente_id: int, db: Session = Depends(get_db)):
+    """Obtener el valor total de todas las facturas de un cliente"""
+    cliente = obtener_cliente_orm(db, cliente_id)
+    
+    valor_total = 0
+    for factura in cliente.facturas:
+        valor_total += factura.valor_total()
+    
+    return {
+        "cliente_id": cliente_id,
+        "cliente_nombre": cliente.nombre,
+        "valor_total": valor_total,
+        "cantidad_facturas": len(cliente.facturas)
     }

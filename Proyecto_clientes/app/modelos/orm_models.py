@@ -37,6 +37,7 @@ class TransaccionORM(Base):
     id = Column(Integer, primary_key=True, index=True)
     valor_unitario = Column(Float, nullable=False)
     cantidad = Column(Integer, nullable=False)
+    descripcion = Column(String, nullable=False)
     factura_id = Column(Integer, ForeignKey("facturas.id", ondelete="CASCADE"), nullable=False)
 
     # Relaciones

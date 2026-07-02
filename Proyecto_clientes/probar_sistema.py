@@ -3,9 +3,20 @@
 
 import urllib.request
 import json
+import os
 
 BASE_URL = "http://localhost:8000"
 headers = {'Content-Type': 'application/json'}
+
+# Eliminar base de datos antigua si existe y no está en uso
+db_path = "sena_proyecto_new.db"
+try:
+    if os.path.exists(db_path):
+        os.remove(db_path)
+        print(f"Base de datos anterior eliminada: {db_path}\n")
+except PermissionError:
+    print(f"Advertencia: No se pudo eliminar {db_path} (está en uso)")
+    print("Por favor, detén el servidor uvicorn antes de ejecutar las pruebas\n")
 
 def probar_endpoint(metodo, ruta, datos=None):
     """Prueba un endpoint y devuelve la respuesta"""
@@ -35,17 +46,17 @@ print(f"   ✓ API funcionando: {resp}")
 # 2. Crear cliente
 print("\n2. Creando cliente...")
 cliente = probar_endpoint("POST", "/clientes", {
-    "id": 999,
+    "id": 1,
     "nombre": "Test Final",
-    "email": "final.test.999@test.com"
+    "email": "final.test@test.com"
 })
 print(f"   ✓ Cliente creado: {cliente}")
 
 # 3. Crear factura
 print("\n3. Creando factura...")
 factura = probar_endpoint("POST", "/facturas", {
-    "cliente": 11,
-    "numero": "FAC-999",
+    "cliente": 1,
+    "numero": "FAC-001",
     "fecha": "2024-01-15"
 })
 print(f"   ✓ Factura creada: {factura}")
@@ -54,7 +65,8 @@ print(f"   ✓ Factura creada: {factura}")
 print("\n4. Creando transacción...")
 transaccion = probar_endpoint("POST", "/facturas/1/transacciones", {
     "valor_unitario": 100.0,
-    "cantidad": 2
+    "cantidad": 2,
+    "descripcion": "Zapatos deportivos"
 })
 print(f"   ✓ Transacción creada: {transaccion}")
 
@@ -67,9 +79,14 @@ print(f"   ✓ Clientes: {len(clientes.get('clientes', []))} registros")
 print(f"   ✓ Facturas: {len(facturas.get('facturas', []))} registros")
 print(f"   ✓ Transacciones: {len(transacciones.get('transacciones', []))} registros")
 
+# 5b. Obtener valor total de facturas del cliente
+print("\n5b. Obteniendo valor total de facturas del cliente...")
+valor_total = probar_endpoint("GET", "/clientes/1/valor_total")
+print(f"   ✓ Valor total: {valor_total}")
+
 # 6. Probar eliminación en cascada
 print("\n6. Probando eliminación en cascada...")
-eliminar = probar_endpoint("DELETE", "/clientes/11")
+eliminar = probar_endpoint("DELETE", "/clientes/1")
 print(f"   ✓ Cliente eliminado: {eliminar}")
 
 # 7. Verificar eliminación

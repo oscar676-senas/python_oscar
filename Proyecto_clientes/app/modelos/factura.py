@@ -4,7 +4,6 @@ from typing import Optional
 
 class FacturaCreate(BaseModel):
     """Modelo para crear una factura"""
-    cliente: int
     numero: str
     fecha: str
 

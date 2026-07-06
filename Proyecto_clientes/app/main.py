@@ -115,12 +115,13 @@ def obtener_factura(factura_id: int, db: Session = Depends(get_db)):
     return {"factura": factura_db.model_dump()}
 
 
-@app.post("/facturas", tags=["Facturas"])
-def crear_factura(datos: FacturaCreate, db: Session = Depends(get_db)):
-    obtener_cliente_orm(db, datos.cliente)
+@app.post("/clientes/{cliente_id}/facturas", tags=["Facturas"])
+def crear_factura(cliente_id: int, datos: FacturaCreate, db: Session = Depends(get_db)):
+    # Verificar que el cliente existe
+    obtener_cliente_orm(db, cliente_id)
 
     nueva_factura = FacturaORM(
-        cliente_id=datos.cliente,
+        cliente_id=cliente_id,
         numero=datos.numero,
         fecha=datos.fecha
     )

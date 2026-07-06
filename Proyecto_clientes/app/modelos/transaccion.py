@@ -4,6 +4,7 @@ from typing import Optional
 
 class TransaccionCreate(BaseModel):
     """Modelo para crear una transacción"""
+    factura_id: int
     valor_unitario: float
     cantidad: int
     descripcion: str

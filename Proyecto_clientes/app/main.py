@@ -178,11 +178,17 @@ def obtener_transaccion(transaccion_id: int, db: Session = Depends(get_db)):
     return {"transaccion": transaccion_db.model_dump()}
 
 
-@app.post("/facturas/{factura_id}/transacciones", tags=["Transacciones"])
-def crear_transaccion(factura_id: int, datos: TransaccionCreate, db: Session = Depends(get_db)):
-    obtener_factura_orm(db, factura_id)
+@app.post("/clientes/{cliente_id}/transacciones", tags=["Transacciones"])
+def crear_transaccion(cliente_id: int, datos: TransaccionCreate, db: Session = Depends(get_db)):
+    # Verificar que el cliente existe
+    obtener_cliente_orm(db, cliente_id)
+    
+    # Verificar que la factura existe y pertenece al cliente
+    factura = obtener_factura_orm(db, datos.factura_id)
+    if factura.cliente_id != cliente_id:
+        raise HTTPException(status_code=400, detail="La factura no pertenece al cliente especificado")
 
-    nueva_transaccion = TransaccionORM(**datos.model_dump(), factura_id=factura_id)
+    nueva_transaccion = TransaccionORM(**datos.model_dump())
     db.add(nueva_transaccion)
     db.commit()
     db.refresh(nueva_transaccion)
